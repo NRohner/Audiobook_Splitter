@@ -10,46 +10,79 @@ from glob import glob
 import librosa
 import librosa.display
 
+# Settings for the silence finder
+dB_Thresh = -40  # Threshold value below which we consider something "silent"
+duration = 3  # Value in seconds of time duration we want the silence to be longer than.
 
-sns.set_theme(style="white", palette=None)
-color_pal = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-color_cycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
+# Loading the audio file
+audio_files = glob('../Audio_Book_Chapters/Audio/*.mp3')
+y, sr = librosa.load("D:\clipping.mp3")
+y_ser = pd.Series(y)
 
-audio_files = glob('../Audio_Book_Chapters/Audio/*.mp3')    #Making a list of all the mp3 files we have in the Audio subfolder
+# Calculating the dB values
+d = librosa.amplitude_to_db(abs(y), ref=np.max)
+d_ser = pd.Series(d)
 
+def return_silences(audio, sample_rate, threshold, duration):
+    dB = librosa.amplitude_to_db(abs(audio), ref=np.max)
 
-#Loading in the audio data
+    # Convert duration into samples
+    sample_duration = sample_rate * duration
 
-#Loading Dune Clip
-#y, sr = librosa.load(r'E:\BigTor\Dune - Audiobook Collection 2015\01 - Dune Saga\mp3\clipping.mp3')    #Loading the first file in our list we created above 'audio_files'. librosa.load outputs 'y' and 'sample rate (sr)'.
-                                        # y is the raw data of the audio file. sample rate is an int value of the sample rate
+    # Creating a blank list for our start and stop indexes
+    a = []
 
-#Loading shorter audiofile
-y, sr = librosa.load(audio_files[1])
+    streak = 0
+    start_index = 0
+    end_index = 0
+    i = 0
+    active_streak = False
 
-pd.Series(y).plot()
-plt.show()
+# For every value in the dB list
+    # add 1 to the sample counter (i)
+    # If that value is less than the threshold value && there is no active streak
+        # Start a streak. Set the start_index to whatever sample number we are at (i), add 1 to the streak counter
+    # Else if that value is less than the threshold value && there is an active streak
+        # add one to the streak counter
+    # Else if the value is greater than the threshold value && there is an active streak
+        #If streak >= sample_duration
+            # Set the end_index to whatever sample number we are at (i). Append the start and end indexes to array a.
+            # Re-set the start and end indexes to 0. Re-set the streak counter and active_streak to 0/False
+        #Else
+    # Re-set the start and end indexes to 0. Re-set the streak counter and active_streak to 0/False
+    # Else if the value is greater than the threshold value && there is no active streak
+        # Do nothing
 
-#I dont have full understanding of what's going on in this section but I know we are doing an fft of the audio file
-# With the ultimate goal of finding the dB values at each sample position and then finding the max dB value
-#n_fft = 2048
-#S = librosa.stft(y, n_fft=n_fft, hop_length=n_fft//2)
-#print(S.shape)
+    for value in dB:
+        i += 1
+        if (value < threshold) and not active_streak:
+            streak += 1
+            start_index = i
+            active_streak = True
 
+        elif (value < threshold) and active_streak:
+            streak += 1
 
+        elif (value >= threshold) and active_streak:
+            if streak >= sample_duration:
+                end_index = i
+                b = [start_index, end_index]
+                a.append(b)
+                start_index = 0
+                end_index = 0
+                streak = 0
+                active_streak = False
+            else:
+                start_index = 0
+                end_index = 0
+                streak = 0
+                active_streak = False
 
-#Convert to dB
-D = librosa.amplitude_to_db(np.abs(y), ref=np.max)
-print("Shape of D: " + str(np.shape(D)))
-maxdB = np.max(abs(D))
-mindB = np.min(abs(D))
-avgdB = np.mean(abs(D))
+    a = np.array(a)
+    return a
 
-print("Max dB: " + str(maxdB))
-print("Min dB: " + str(mindB))
-print("Mean dB: " + str(avgdB))
+silence_index = return_silences(y, sr, dB_Thresh, duration)
 
-nonMuteSections = librosa.effects.split(y)
+print(silence_index)
 
-print(len(nonMuteSections))
 
