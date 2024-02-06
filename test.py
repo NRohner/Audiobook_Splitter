@@ -1,15 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+a = []
+b = [1, 4]
+c = [8, 12]
 
-x = np.zeros(5)
-y = np.zeros(5)
+a.append(b)
+a.append(c)
 
-for i in range (0, 5):
-    y[i] = i + 1
+a = np.array(a)
 
-print(x)
-print(y)
-
-plt.plot(x, y)
-plt.show()
+print(a)

@@ -39,12 +39,15 @@ plt.show()
 
 
 #Convert to dB
-D = librosa.amplitude_to_db(np.abs(S), ref=np.max)
+D = librosa.amplitude_to_db(np.abs(y), ref=np.max)
+print("Shape of D: " + str(np.shape(D)))
 maxdB = np.max(abs(D))
 mindB = np.min(abs(D))
+avgdB = np.mean(abs(D))
 
 print("Max dB: " + str(maxdB))
 print("Min dB: " + str(mindB))
+print("Mean dB: " + str(avgdB))
 
 nonMuteSections = librosa.effects.split(y)
 
