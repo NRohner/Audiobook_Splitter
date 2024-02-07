@@ -3,7 +3,8 @@ import librosa
 import soundfile as sf
 
 # Roadmap and feature wishlist:
-# 1. Get the basic app working in an IDE environment
+# 1. Get the basic app working in an IDE environment - DONE
+# 1.5 Performance optimization - only analyze every nth sample
 # 2. Error proof the user input sections
 # 3. Add progress bars
 # 4. Add more user control ex. ignore silence in first/last X:XX of the audio file
