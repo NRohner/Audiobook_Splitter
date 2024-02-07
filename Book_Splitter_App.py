@@ -154,7 +154,7 @@ def split_file(audio, silences):
     return split_audio
 
 # Function to write the split files to memory
-def write_files(audio_chunks):
+def write_files(audio_chunks, sample_rate):
     # Prompting user if they want to split and write the files
     proceed = str(input("Do you want to proceed and split the file and save the resulting audio chunks? [y/n]"))
     proceed = proceed.lower()
@@ -163,22 +163,26 @@ def write_files(audio_chunks):
         # Prompt for destination folder path
         dest_path = str(input("Please enter the folder path to the location you want to save the new audio files"
                               " [NO QUOTATION MARKS!]: "))
+
+        # Prompt for the desired file name prefix
+        file_prefix = str(input("Please enter the desired file name prefix: "))
+
         # Write the files
-        print("len(audio_chunks) = " + str(len(audio_chunks)))
         for i in range(len(audio_chunks)):
-            print("i = " + str(i))
+            file_name = str(dest_path + "/" + file_prefix + "_" + str(i + 1) + ".mp3")
+            sf.write(file_name, audio_chunks[i], sample_rate)
+        print("Your files have been written to the destination folder.")
+        print("Thank you for using Audio Book Splitter!")
 
-
-
-    #else:
+    else:
+        print("Thank you for using Audio Book Splitter!")
 
 # The actual running of the app happens here:
-
 path, dB_cutoff, duration = startup()
 audio, sample_rate = load_audio(path)
 silences = return_silences(audio, sample_rate, dB_cutoff, duration)
 
 audio_chunks = split_file(audio, silences)
-#write_files(audio_chunks)
+write_files(audio_chunks, sample_rate)
 
 
