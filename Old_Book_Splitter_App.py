@@ -1,8 +1,8 @@
 import numpy as np
 import librosa
 import soundfile as sf
-import time
-from icecream import ic
+
+# THIS IS THE OLD APP BEFORE THE EVERY NTH SAMPLE OPTIMIZATION IS ADDED
 
 
 # Roadmap and feature wishlist:
@@ -38,12 +38,10 @@ def startup():
     duration = float(input("Duration: "))
     return file_path, dB_Thresh, duration
 
-
 def load_audio(file_path):
-    imported_audio, imported_sample_rate = librosa.load(file_path)
+    audio, sample_rate = librosa.load(file_path)
 
-    return imported_audio, imported_sample_rate
-
+    return audio, sample_rate
 
 # Function to convert samples into time
 def samples_2_time(sample_num, sample_rate):
@@ -56,15 +54,8 @@ def samples_2_time(sample_num, sample_rate):
 
     return time_string
 
-
-def return_silences(audio, sample_rate, threshold, duration, n_samples):
-    # We are going to time this function for benchmarking purposes
-    start_time = time.time()
-
+def return_silences(audio, sample_rate, threshold, duration):
     dB = librosa.amplitude_to_db(abs(audio), ref=np.max)
-
-    # Finding our sample conversion rate based on the number of samples we want to scan each second
-    sample_conversion_rate = int(sample_rate / n_samples)
 
     # Convert duration into samples
     sample_duration = int(sample_rate * duration)
@@ -76,39 +67,34 @@ def return_silences(audio, sample_rate, threshold, duration, n_samples):
     start_index = 0
     end_index = 0
     i = 0
-    j = 0
     active_streak = False
 
-    # For every value in the dB list
+# For every value in the dB list
     # add 1 to the sample counter (i)
     # If that value is less than the threshold value && there is no active streak
-    # Start a streak. Set the start_index to whatever sample number we are at (i), add 1 to the streak counter
+        # Start a streak. Set the start_index to whatever sample number we are at (i), add 1 to the streak counter
     # Else if that value is less than the threshold value && there is an active streak
-    # add one to the streak counter
+        # add one to the streak counter
     # Else if the value is greater than the threshold value && there is an active streak
-    # If streak >= sample_duration
-    # Set the end_index to whatever sample number we are at (i). Append the start and end indexes to array a.
-    # Re-set the start and end indexes to 0. Re-set the streak counter and active_streak to 0/False
-    # Else
+        #If streak >= sample_duration
+            # Set the end_index to whatever sample number we are at (i). Append the start and end indexes to array a.
+            # Re-set the start and end indexes to 0. Re-set the streak counter and active_streak to 0/False
+        #Else
     # Re-set the start and end indexes to 0. Re-set the streak counter and active_streak to 0/False
     # Else if the value is greater than the threshold value && there is no active streak
-    # Do nothing
+        # Do nothing
 
-
-    # Need a different way to do this based on i.
-    #for value in dB:
-    while i < len(dB):
-        ic(i)
-
-        if (dB[i] < threshold) and not active_streak:
+    for value in dB:
+        i += 1
+        if (value < threshold) and not active_streak:
             streak += 1
             start_index = i
             active_streak = True
 
-        elif (dB[i] < threshold) and active_streak:
-            streak += sample_conversion_rate
+        elif (value < threshold) and active_streak:
+            streak += 1
 
-        elif (dB[i] >= threshold) and active_streak:
+        elif (value >= threshold) and active_streak:
             if streak >= sample_duration:
                 end_index = i
                 b = [start_index, end_index]
@@ -122,26 +108,19 @@ def return_silences(audio, sample_rate, threshold, duration, n_samples):
                 end_index = 0
                 streak = 0
                 active_streak = False
-        i = sample_conversion_rate * j
-        j += 1
+
 
     a = np.array(a)
-    end_time = time.time()
-    elapsed_time = end_time - start_time
 
     print("Book Splitter identified " + str(a.shape[0]) + " split location(s). This will result in " +
           str(a.shape[0] + 1) + " files.")
-
-    print(f"Book Splitter took {elapsed_time} seconds to complete.")
-    print(f"j = {j}")
-    print(f"i = {i}")
 
     time_stamps = str(input("Would you like to see the time stamps for each split location? [y/n]"))
     time_stamps = time_stamps.lower()
 
     if time_stamps == "y":
         # Find the midpoint of the silence stored in each row of a
-        mid_pts = []  # List of strings that contain the time stamp of each midpoint
+        mid_pts = []    # List of strings that contian the time stamp of each midpoint
         for i in range(0, a.shape[0]):
             mid_pt = ((a[i][1] - a[i][0]) / 2) + a[i][0]
             mid_pts.append(samples_2_time(mid_pt, sample_rate))
@@ -154,7 +133,6 @@ def return_silences(audio, sample_rate, threshold, duration, n_samples):
               "please quit the program and re-try with different input parameters.")
 
     return a
-
 
 # Function to actually split the audio
 def split_file(audio, silences):
@@ -172,13 +150,12 @@ def split_file(audio, silences):
 
     # Adding the middle segments of audio between each split point
     for j in range(len(mid_pts) - 1):
-        split_audio.append(audio[mid_pts[j]:mid_pts[j + 1]])
+        split_audio.append(audio[mid_pts[j]:mid_pts[j+1]])
 
     # Adding the last audio segment between the last split point and the end of the file
     split_audio.append(audio[mid_pts[-1]:])
 
     return split_audio
-
 
 # Function to write the split files to memory
 def write_files(audio_chunks, sample_rate):
@@ -204,23 +181,15 @@ def write_files(audio_chunks, sample_rate):
     else:
         print("Thank you for using Audio Book Splitter!")
 
-
 # The actual running of the app happens here:
-startup_time_start = time.time()
-path, dB_cutoff, duration = startup()
-startup_time_end = time.time()
-startup_time = startup_time_end - startup_time_start
-ic(startup_time)
-load_timer_start = time.time()
-audio, sample_rate = load_audio(path)
-load_timer_end = time.time()
-load_timer = load_timer_end - load_timer_start
-ic(load_timer)
-silences_timer_start = time.time()
-silences = return_silences(audio, sample_rate, dB_cutoff, duration, n_samples=60)
-silences_timer_end = time.time()
-silences_timer = silences_timer_end - silences_timer_start
 
+# Taking input for n number of samples to scan
+
+path, dB_cutoff, duration = startup()
+audio, sample_rate = load_audio(path)
+silences = return_silences(audio, sample_rate, dB_cutoff, duration)
 
 audio_chunks = split_file(audio, silences)
 write_files(audio_chunks, sample_rate)
+
+
