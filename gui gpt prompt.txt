@@ -1,0 +1,16 @@
+Chat GPT prompt for creaing my base gui
+
+write me a python script using tkinter and ttkbootstrap to create a front end GUI for my application.
+
+The title of the window should be "Audio Book Splitter".
+The window theme should be superhero.
+The window dimensions should be 800px by 400px.
+Aligned to the left of the window there is a browse to file box. It is labeled "Select audiobook file: "
+
+Below the browse to file section there should be a horizontal divider
+
+Below the divider there should be text that says "Preferences"
+
+Below the preferences text there should be an integer slider that goes between -80 and 0 and is labeled "dB Threshold".
+Below the dB Threshold slider there should be a decimal slider that goes between 0 and 10 and is labeled "Duration"
+
