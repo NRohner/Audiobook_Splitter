@@ -7,12 +7,15 @@ Time for CHAPTER.mp3 with old splitter: 0.53702
 
 Time for CHAPTER.mp3 with new splitter_v0.2: 0.26002
 
+Time for CHAPTER.mp3 with splitter v1.1, 30 samples per second: 0.012048
 
 Time for clip.mp3 with new splitter_v0.2: 173.50396
     - notes on this run. Many chapters were missed.
     - Chapter 1 ends around 29:56
 
-    Best settings so far:
+    Best settings so far:   This resulted in a perfect split for the sample book section
     dB threshold: -40
-    Duration: 2
+    Duration: 2.5
+
+Time for clip.mp3 with Book_Splitter_App_v1.2: 2.4595
 

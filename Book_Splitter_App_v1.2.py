@@ -69,7 +69,7 @@ def return_silences(audio, sample_rate, threshold, duration, n_samples):
     sample_duration = int(sample_rate * duration)
 
     # Creating a blank list for our start and stop indexes
-    a = []
+    a = np.empty((0, 2), int)
 
     streak = 0
     start_index = 0
@@ -94,24 +94,24 @@ def return_silences(audio, sample_rate, threshold, duration, n_samples):
     # Do nothing
 
 
-    # Need a different way to do this based on i.
-    #for value in dB:
+    below_threshold = dB < threshold
+    above_threshold = ~below_threshold
     while i < len(dB):
-        ic(i)
+        #ic(i)
 
-        if (dB[i] < threshold) and not active_streak:
+        if below_threshold[i] and not active_streak:
             streak += 1
             start_index = i
             active_streak = True
 
-        elif (dB[i] < threshold) and active_streak:
+        elif below_threshold[i] and active_streak:
             streak += sample_conversion_rate
 
-        elif (dB[i] >= threshold) and active_streak:
+        elif above_threshold[i] and active_streak:
             if streak >= sample_duration:
                 end_index = i
-                b = [start_index, end_index]
-                a.append(b)
+                b = np.array([start_index, end_index]).reshape(1, -1)
+                a = np.append(a, b, axis=0)
                 start_index = 0
                 end_index = 0
                 streak = 0
@@ -124,7 +124,6 @@ def return_silences(audio, sample_rate, threshold, duration, n_samples):
         j += 1
         i = sample_conversion_rate * j
 
-    a = np.array(a)
     end_time = time.time()
     elapsed_time = end_time - start_time
 
@@ -132,8 +131,6 @@ def return_silences(audio, sample_rate, threshold, duration, n_samples):
           str(a.shape[0] + 1) + " files.")
 
     print(f"Book Splitter took {elapsed_time} seconds to complete.")
-    print(f"j = {j}")
-    print(f"i = {i}")
 
     time_stamps = str(input("Would you like to see the time stamps for each split location? [y/n]"))
     time_stamps = time_stamps.lower()
@@ -209,14 +206,14 @@ startup_time_start = time.time()
 path, dB_cutoff, duration = startup()
 startup_time_end = time.time()
 startup_time = startup_time_end - startup_time_start
-ic(startup_time)
+#ic(startup_time)
 load_timer_start = time.time()
 audio, sample_rate = load_audio(path)
 load_timer_end = time.time()
 load_timer = load_timer_end - load_timer_start
-ic(load_timer)
+#ic(load_timer)
 silences_timer_start = time.time()
-silences = return_silences(audio, sample_rate, dB_cutoff, duration, n_samples=60)
+silences = return_silences(audio, sample_rate, dB_cutoff, duration, n_samples=30)
 silences_timer_end = time.time()
 silences_timer = silences_timer_end - silences_timer_start
 
