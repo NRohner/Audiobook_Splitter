@@ -1,0 +1,18 @@
+C:\Users\rohnern\Documents\Nick Rohner\Personal Code Projects\Audio_Book_Chapters\Audio\CHAPTER.mp3
+
+C:\Users\rohnern\Downloads\clipping.mp3
+
+
+Time for CHAPTER.mp3 with old splitter: 0.53702
+
+Time for CHAPTER.mp3 with new splitter_v0.2: 0.26002
+
+
+Time for clip.mp3 with new splitter_v0.2: 173.50396
+    - notes on this run. Many chapters were missed.
+    - Chapter 1 ends around 29:56
+
+    Best settings so far:
+    dB threshold: -40
+    Duration: 2
+

@@ -16,7 +16,6 @@ from icecream import ic
 # 7. GUI???
 # 8. More advanced processing/chapter detection methods (AI??)
 
-
 # App startup function. This runs when the app starts and takes in the required info from the user
 # NOTE: The user input sections of this function are not error proofed at all. This is something you could come back to
 # once the thing is functioning
@@ -122,8 +121,8 @@ def return_silences(audio, sample_rate, threshold, duration, n_samples):
                 end_index = 0
                 streak = 0
                 active_streak = False
-        i = sample_conversion_rate * j
         j += 1
+        i = sample_conversion_rate * j
 
     a = np.array(a)
     end_time = time.time()
