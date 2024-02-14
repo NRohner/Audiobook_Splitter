@@ -1,9 +1,6 @@
-import csv
-import datetime
 import pathlib
 import tkinter
 from queue import Queue
-from threading import Thread
 from tkinter import ttk
 from tkinter.filedialog import askdirectory, asksaveasfilename, askopenfilename
 
