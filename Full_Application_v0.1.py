@@ -9,6 +9,7 @@ from queue import Queue
 from tkinter import ttk
 from tkinter.filedialog import askdirectory, asksaveasfilename, askopenfilename
 from ttkbootstrap import Style
+import tkinter.messagebox
 
 
 # Roadmap and feature wishlist:
@@ -114,13 +115,10 @@ class MainWindow(ttk.Frame):
         super().__init__(*args, **kwargs)
         # application variables
         self.file_path_var = tkinter.StringVar(value=str(pathlib.Path().absolute()))
-        self.search_term_var = tkinter.StringVar(value='txt')
-        self.search_type_var = tkinter.StringVar(value='endswidth')
-        self.search_count = 0
         self.dB_threshold_var = tkinter.DoubleVar(value=-40)
         self.duration_var = tkinter.DoubleVar(value=2.5)
         self.output_file_name = tkinter.StringVar(value='file_name')
-        self.output_file_path = tkinter.StringVar(value=str(pathlib.Path().absolute()))
+        self.output_folder_path = tkinter.StringVar(value=str(pathlib.Path().absolute()))
 
         # Dynamic Label Variables - starting by setting them to the defualt values
         self.dB_label_value = tkinter.StringVar(value="-40")
@@ -131,6 +129,11 @@ class MainWindow(ttk.Frame):
 
         # Boolean variables for error proofing
         self.has_analyzed = False
+
+        # Audio and sample rate variables
+        self.audio = []
+        self.sample_rate = 0
+
 
 
         # container for user input
@@ -189,7 +192,7 @@ class MainWindow(ttk.Frame):
 
         # output settings
         ttk.Label(output_labelframe, text="Output file location").grid(row=0, column=0, padx=10, pady=2, sticky='ew')
-        e2 = ttk.Entry(output_labelframe, textvariable=self.output_file_path)
+        e2 = ttk.Entry(output_labelframe, textvariable=self.output_folder_path)
         e2.grid(row=0, column=1, sticky='ew', padx=10, pady=2)
         b2 = ttk.Button(output_labelframe, text='Browse', command=self.on_out_browse, style='primary.TButton')
         b2.grid(row=0, column=2, sticky='ew', pady=2, ipadx=10)
@@ -204,7 +207,7 @@ class MainWindow(ttk.Frame):
 
     def return_silences(self, audio, sample_rate, threshold, duration, n_samples):
         # We are going to time this function for benchmarking purposes
-        #start_time = time.time()
+        start_time = time.time()
 
         dB = librosa.amplitude_to_db(abs(audio), ref=np.max)
 
@@ -226,7 +229,6 @@ class MainWindow(ttk.Frame):
 
         # Creating a variable to feed to the progress bar
         total_samples = len(dB) / sample_conversion_rate
-        ic(total_samples)
 
         # For every value in the dB list
         # add 1 to the sample counter (i)
@@ -247,9 +249,15 @@ class MainWindow(ttk.Frame):
         above_threshold = ~below_threshold
         while i < len(dB):
             # Updating progress bar
-            pct_done = ((j / total_samples) * 100) + 10
-            self.prog_bar_value.set(pct_done)
-            self.update_idletasks()
+            # So, this progress bar part causes a 3 order of magnitude increase in processing time. I NEED to either
+            # Get rid of it, or speed it up a lot
+
+            # Turns out that only sending every 1000 times speeds it up a good bit
+
+            if j % 1000 == 0:
+                pct_done = ((j / total_samples) * 100) + 10
+                self.prog_bar_value.set(pct_done)
+                self.update_idletasks()
 
             if below_threshold[i] and not active_streak:
                 streak += 1
@@ -276,30 +284,13 @@ class MainWindow(ttk.Frame):
             j += 1
             i = sample_conversion_rate * j
 
-        #end_time = time.time()
-        #elapsed_time = end_time - start_time
+        end_time = time.time()
+        elapsed_time = end_time - start_time
 
-        print("Book Splitter identified " + str(a.shape[0]) + " split location(s). This will result in " +
-              str(a.shape[0] + 1) + " files.")
-
-        #print(f"Book Splitter took {elapsed_time} seconds to complete.")
-
-        time_stamps = str(input("Would you like to see the time stamps for each split location? [y/n]"))
-        time_stamps = time_stamps.lower()
-
-        if time_stamps == "y":
-            # Find the midpoint of the silence stored in each row of a
-            mid_pts = []  # List of strings that contain the time stamp of each midpoint
-            for i in range(0, a.shape[0]):
-                mid_pt = ((a[i][1] - a[i][0]) / 2) + a[i][0]
-                mid_pts.append(samples_2_time(mid_pt, sample_rate))
-            print("The timestamps for each split location are: ")
-            print(mid_pts)
-            print("If the number or location of these splits seems incorrect, "
-                  "please quit the program and re-try with different input parameters.")
-        else:
-            print("If this number of splits seems incorrect, "
-                  "please quit the program and re-try with different input parameters.")
+        # Final progress bar update
+        pct_done = ((j / total_samples) * 100) + 10
+        self.prog_bar_value.set(pct_done)
+        self.update_idletasks()
 
         return a
 
@@ -323,10 +314,10 @@ class MainWindow(ttk.Frame):
         #       1.1 Update the progress bar to 10% to show the load is finished - DONE
         # 2. Run return_silences on the audio we loaded in step 1
         # 3. Add some extra functionality to return silences so that the progress bar works - DONE (I think)
-        # 4. Update the progress bar
-        # 5. Trigger a popup window with the info about how many splits were found and where they are
-        #       5.1. Proceed/Start over options on that popup window
-        # 6. set has_analyzed to True
+        # 4. Update the progress bar - DONE
+        # 5. Trigger a popup window with the info about how many splits were found and where they are - DONE
+        #       5.1. Proceed/Start over options on that popup window - Done
+        # 6. set has_analyzed to True - DONE
 
         # 0. Collect values from GUI
         file_path = self.file_path_var.get()
@@ -338,27 +329,93 @@ class MainWindow(ttk.Frame):
         self.update_idletasks()
 
         # 1. Load Audio
-        audio, sample_rate = load_audio(file_path)
-        ic(sample_rate)
+        self.audio, self.sample_rate = load_audio(file_path)
 
         # 1.1 - Update progress bar to 10%
         self.prog_bar_value.set(10)
         self.update_idletasks()
 
-        # 2. - Run return silences
-        silences = self.return_silences(audio, sample_rate, dB_thresh, duration, n_samples=samples_per_second)
+        # 2, 3, 4. - Run return silences
+        self.silences = self.return_silences(self.audio, self.sample_rate, dB_thresh, duration, n_samples=samples_per_second)
 
+        # 5. - Display popup window that says "Analysis has finished"
+        self.show_analysis_popup(self.silences, self.sample_rate)
+
+
+        self.has_analyzed = True
+
+
+    def show_analysis_popup(self, silences, sr):
+        # Calculating the midpoints
+        mid_pts = []  # List of strings that contain the time stamp of each midpoint
+        for i in range(0, silences.shape[0]):
+            mid_pt = ((silences[i][1] - silences[i][0]) / 2) + silences[i][0]
+            mid_pts.append(samples_2_time(mid_pt, sr))
+
+        popup_title = "Analysis Finished"
+        popup_message = f"Analysis has finished. \n\n{len(silences)} split location(s) detected." \
+                        f" This will result in {len(silences) + 1} file(s)." \
+                        f"\n\nFile will be split at: {mid_pts}." \
+                        f"\n\nDo you wish to proceed?"
+
+        result = tkinter.messagebox.askquestion(popup_title, popup_message)
+
+        if result == 'yes':
+            pass
+        else:
+            self.prog_bar_value.set(0)
+            self.has_analyzed = False
+
+
+    def save_popup_warning(self, message:str):
+        save_popup_title = "Warning"
+
+        result = tkinter.messagebox.showwarning(save_popup_title, message)
 
 
     def on_save(self):
         """Callback for save button press"""
 
-        # 1. Check if the file name field is blank
-        #       1.1. If it is blank, popup with message "Please enter a file name before you save."
-        # 2. Check if there is a file with the same name already in the save file path
-        #       2.1. If there is already file with the same name, popup with message "There is already a file with that name in this location. Would you like to overwrite?"
-        # 3. Write files
-        pass
+        # 1. Check if has_analyzed = True. If not, prompt user to analyze files first - DONE
+        # 2. Read in file name and path - DONE
+        # 3. Check if the file name field is blank or equal to the default
+        #       3.1. If it is blank, popup with message "Please enter a file name before you save." - DONE
+        #       3.2. If it is equal to the default value, popup with message "It looks like you haven't changed the file name. Are you sure you want to name your files "file_name" - DONE
+        #           3.2.1. Update save_popup_yn to write the files to memory if the say yes
+        # 4. Split files - DONE
+        # 5. Create string for full new file name
+        # 6. Check if there is a file with the same name already in the save file path
+        #       6.1. If there is already file with the same name, popup with message "There is already a file with that name in this location. Would you like to overwrite?"
+        # 7. Write files
+
+        # 1. Check has_analyzed
+        if self.has_analyzed == False:
+            msg = "Please analyze an audio file before trying to save."
+            self.save_popup_warning(msg)
+
+        else:
+        # 2. Read in file name and path
+            save_folder = self.output_folder_path.get()
+            save_name = self.output_file_name.get()
+
+        # 3. Check if the file name has been changed or is blank
+            if save_name == "":
+                msg = "Your output file name is blank. Please enter a valid output file name before saving."
+                self.save_popup_warning(msg)
+            elif save_name == 'file_name':
+                msg = "You didn't change the output file name. Please change the output name and re-save."
+                self.save_popup_warning(msg)
+            else:
+                # 4. Split files
+                split_audio = split_file(self.audio, self.silences)
+
+                # 7. Write Files
+                for i in range(len(split_audio)):
+                    file_name = str(save_folder + "/" + save_name + "-" + str(i + 1) + ".mp3")
+                    sf.write(file_name, split_audio[i], self.sample_rate)
+
+                tkinter.messagebox.showinfo(title=None, message="Your files have been saved.")
+
 
     def on_in_browse(self):
         """Callback for input browse"""
@@ -367,12 +424,13 @@ class MainWindow(ttk.Frame):
             self.file_path_var.set(path)
 
         self.has_analyzed = False
+        self.prog_bar_value.set(0)
 
     def on_out_browse(self):
         """Callback for output browse"""
         path = askdirectory(title='Select directory')
         if path:
-            self.output_file_path.set(path)
+            self.output_folder_path.set(path)
 
 # Running the main application
 if __name__ == '__main__':
