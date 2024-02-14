@@ -7,13 +7,13 @@ from icecream import ic
 
 # Roadmap and feature wishlist:
 # 1. Get the basic app working in an IDE environment - DONE
-# 1.5 Performance optimization - only analyze every nth sample
+# 1.5 Performance optimization - only analyze every nth sample - DONE
 # 2. Error proof the user input sections
 # 3. Add progress bars
 # 4. Add more user control ex. ignore silence in first/last X:XX of the audio file
 # 5. More control over naming of split, output files
 # 6. Make a .exe for the app, so it can run outside an IDE
-# 7. GUI???
+# 7. GUI - WIP
 # 8. More advanced processing/chapter detection methods (AI??)
 
 # App startup function. This runs when the app starts and takes in the required info from the user

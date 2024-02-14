@@ -3,7 +3,6 @@ import tkinter
 from queue import Queue
 from tkinter import ttk
 from tkinter.filedialog import askdirectory, asksaveasfilename, askopenfilename
-
 from ttkbootstrap import Style
 
 
