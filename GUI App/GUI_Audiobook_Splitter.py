@@ -171,7 +171,7 @@ class MainWindow(ttk.Frame):
         dB_slider.grid(row=1, column=0, padx=10, pady=2, sticky='ew')
         # dB Value Label
         dB_value_label = ttk.Label(params_labelframe, textvariable=self.dB_label_value)
-        dB_value_label.grid(row=0, column=0, padx=90, pady=2, sticky='w')
+        dB_value_label.grid(row=0, column=0, padx=100, pady=2, sticky='w')
 
 
         # Duration
