@@ -421,7 +421,6 @@ class MainWindow(ttk.Frame):
     def on_in_browse(self):
         """Callback for input browse"""
         path = filedialog.askopenfilename(title='Select an audio file', filetypes=[("Audio Files", "*.wav; *.mp3")])
-        print("Have we crashed yet?")
         if path:
             self.file_path_var.set(path)
 
