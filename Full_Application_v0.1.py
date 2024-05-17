@@ -7,6 +7,7 @@ import pathlib
 import tkinter
 from queue import Queue
 from tkinter import ttk
+from tkinter import filedialog
 from tkinter.filedialog import askdirectory, asksaveasfilename, askopenfilename
 from ttkbootstrap import Style
 import tkinter.messagebox
@@ -419,7 +420,8 @@ class MainWindow(ttk.Frame):
 
     def on_in_browse(self):
         """Callback for input browse"""
-        path = askopenfilename(title='Select an audio file', filetypes=[('Audio Files', '*.wav;*.mp3;*.ogg')])
+        path = filedialog.askopenfilename(title='Select an audio file', filetypes=[("Audio Files", "*.wav; *.mp3")])
+        print("Have we crashed yet?")
         if path:
             self.file_path_var.set(path)
 
